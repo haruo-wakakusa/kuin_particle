@@ -1,4 +1,6 @@
-; simple_particle.kn
+; copyright 2018 Haruo Wakakusa
+;
+; particle2.kn
 ; - 単色の円盤が等速運動し、一定時間後消滅するモデル
 ; - Kuin言語に実装されているパーティクルの実装を参考にしています
 
