@@ -1,0 +1,44 @@
+; ball.kn
+; ICS MEDIAさんのサイトを参考にしています
+; https://ics.media/tutorial-createjs/particle.html
+
+const WINDOW_WIDTH: int :: 600
+const WINDOW_HEIGHT: int :: 600
+
+func main()
+	var wnd: wnd@Wnd :: wnd@makeWnd(null, %fix,
+	|@WINDOW_WIDTH, @WINDOW_HEIGHT, "ボールシミュレーション")
+	var draw: wnd@Draw :: wnd@makeDraw(wnd, 0, 0,
+	|@WINDOW_WIDTH, @WINDOW_HEIGHT, %fix, %fix, false)
+	
+	const radius: float :: 10.0
+	const bottom: float :: (@WINDOW_HEIGHT $ float) - radius
+	
+	var x: float :: 300.0
+	var y: float :: 100.0
+	var vy: float :: 0.0
+	
+	while(wnd@act())
+		do draw@circle(x, y, radius, radius, 0xFFFF0000)
+		do draw@render(60)
+		
+		; 次の状態の計算を行う
+		for(1, 2)
+			do vy :+ 0.0001
+			{NOTE: Kuin処理系バグの一時的な回避}
+			var cond1: bool :: (bottom - y).abs() > 1.0
+			var cond2: bool :: vy.abs() > 0.01
+			if(cond1 | cond2)
+				do vy :+ 0.1
+				do y :+ vy
+			else
+				do vy :+ 0.0
+			end if
+			if(y > bottom)
+				do y :: bottom - (y - bottom)
+				do vy :: -vy * 0.85 {定数は弾性係数}
+			end if
+		end for
+		
+	end while
+end func

@@ -1,0 +1,69 @@
+; balls.kn
+; ICS MEDIAさんのサイトを参考にしています
+; https://ics.media/tutorial-createjs/particle.html
+
+const WINDOW_WIDTH: int :: 1000
+const WINDOW_HEIGHT: int :: 600
+
+class Ball()
+	const radius: float :: 10.0
+	const bottom: float :: (@WINDOW_HEIGHT $ float) - radius
+	
+	+var x: float
+	+var y: float
+	+var vy: float
+	
+	*func ctor()
+		do me.x :: lib@rndFloat(50.0, (@WINDOW_WIDTH $ float) - 50.0)
+		do me.y :: lib@rndFloat(100.0, (@WINDOW_HEIGHT $ float) - 100.0)
+		do me.vy :: 0.0
+	end func
+	
+	+func draw()
+		do draw@circle(me.x, me.y, radius, radius, 0xFF880000)
+		
+		; 次の状態の計算を行う
+		for(1, 10)
+			; 差分の適用(静止状態に近似できるならする)
+			{TODO: 一時的な処理系バグ回避}
+			var cond1: bool :: (bottom - me.y).abs() > 1.0
+			var cond2: bool :: me.vy.abs() > 0.005
+			if(cond1 | cond2)
+				do me.vy :+ 0.005
+				do me.y :+ me.vy
+			else
+				do me.vy :+ 0.0
+			end if
+			
+			; 跳ね返り
+			if(me.y > bottom)
+				do me.y :: bottom - (me.y - bottom)
+				do me.vy :: -me.vy * 0.85 {定数は弾性係数}
+			end if
+		end for
+	end func
+	
+end class
+
+func main()
+	var wnd: wnd@Wnd :: wnd@makeWnd(null, %fix,
+	|@WINDOW_WIDTH, @WINDOW_HEIGHT, "ボールシミュレーション")
+	var draw: wnd@Draw :: wnd@makeDraw(wnd, 0, 0,
+	|@WINDOW_WIDTH, @WINDOW_HEIGHT, %fix, %fix, false)
+	
+	const BALLS: int :: 1000
+	
+	var balls: []@Ball :: #[BALLS]@Ball
+	for i(0, BALLS - 1)
+		do balls[i] :: #@Ball
+	end for
+	
+	while(wnd@act())
+		do draw@rect(0.0, 0.0,
+		|@WINDOW_WIDTH $ float, @WINDOW_HEIGHT $ float, 0xFFCCCCCC)
+		for i(0, BALLS - 1)
+			do balls[i].draw()
+		end for
+		do draw@render(60)
+	end while
+end func

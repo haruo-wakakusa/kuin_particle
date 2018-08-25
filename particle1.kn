@@ -1,0 +1,82 @@
+; simple_particle.kn
+; - 単色の円盤が等速運動し、一定時間後消滅するモデル
+; - Kuin言語に実装されているパーティクルの実装を参考にしています
+
+const WINDOW_WIDTH: float :: 800.0
+const WINDOW_HEIGHT: float :: 600.0
+
+class Particle()
+	+var lifecycle: int
+	+var x0: float
+	+var y0: float
+	+var r: float
+	+var rot: float
+	+var drot: float
+	
+	*func ctor()
+		; 生存時間が0のパーティクルは消滅しているオブジェクト
+		; 生存時間は1フレーム毎にデクリメントされる
+		do me.lifecycle :: 0
+		do me.x0 :: @WINDOW_WIDTH * 0.5
+		do me.y0 :: @WINDOW_HEIGHT * 0.5
+		{その他の変数はデフォルト(0.0)に設定}
+	end func
+	
+	+func draw(): bool
+		if(me.lifecycle > 0)
+			do me.lifecycle :- 1
+			do me.r :+ @ramp(me.r, 0.0, 30.0, 100.0, 5.0)
+			do me.rot :+ me.drot
+			
+			var x: float :: me.x0 + me.r * lib@cos(me.rot)
+			var y: float :: me.y0 - me.r * lib@sin(me.rot)
+			
+			do draw@circle(x, y, 10.0, 10.0, 0xFFFF0000)
+		end if
+	end func
+end class
+
+func ramp(x: float, x1: float, y1: float, x2: float, y2: float): float
+	if(x <= x1)
+		ret y1
+	elif(x >= x2)
+		ret y2
+	else
+		var alpha: float :: (x - x1) / (x2 - x1)
+		ret(1.0 - alpha) * y1 + alpha * y2
+	end if
+end func
+
+func main()
+	var wnd: wnd@Wnd :: wnd@makeWnd(null, %fix,
+	|@WINDOW_WIDTH $ int, @WINDOW_HEIGHT $ int, "パーティクルサンプル")
+	var draw: wnd@Draw :: wnd@makeDraw(wnd, 0, 0,
+	|@WINDOW_WIDTH $ int, @WINDOW_HEIGHT $ int, %fix, %fix, false)
+	
+	const BUFFER_SIZE: int :: 1000
+	const DIRECTIONS: int :: 32
+	
+	var particles: []@Particle :: #[BUFFER_SIZE]@Particle
+	for i(0, BUFFER_SIZE - 1)
+		do particles[i] :: #@Particle
+	end for
+	
+	var idx: int :: 0
+	
+	while(wnd@act())
+		if(draw@cnt() % 5 = 0)
+			do dbg@print("Running...\n")
+			for i(0, DIRECTIONS - 1)
+				do particles[idx].lifecycle :: 3 * 60
+				do particles[idx].r :: 0.0
+				do particles[idx].rot
+				|:: 2.0 * lib@pi * i $ float / DIRECTIONS $ float
+				do idx :: (idx + 1) % BUFFER_SIZE
+			end for
+		end if
+		for i(0, BUFFER_SIZE - 1)
+			do particles[i].draw()
+		end for
+		do draw@render(60)
+	end while
+end func
